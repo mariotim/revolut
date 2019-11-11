@@ -85,7 +85,6 @@ class TransactionManagementAppTest : HttpResponseConverter() {
         return@runBlocking
     }
 
-
     @Test
     fun transfer() = runBlocking {
         val sender = "user5"
@@ -116,6 +115,18 @@ class TransactionManagementAppTest : HttpResponseConverter() {
         return@runBlocking
     }
 
+
+    @Test
+    fun withdraw() = runBlocking {
+        val email = "user9"
+        assertUserCreated(email)
+        depositAsync(email, BigDecimal(1000))
+        val withdraw = withdrawAsync(email, BigDecimal(100))
+        assertThat(withdraw.status).isEqualTo(HttpStatusCode.OK)
+        return@runBlocking
+    }
+
+
     private suspend fun assertUserCreated(email: String) {
         val createUserResponse = createUserAsync(email)
         assertThat(createUserResponse.status).isEqualTo(HttpStatusCode.Created)
@@ -143,6 +154,9 @@ class TransactionManagementAppTest : HttpResponseConverter() {
 
     private suspend fun depositAsync(email: String, amount: BigDecimal) =
             coroutineScope { async { client.post<HttpResponse>(port = 8080, path = "/deposit/$email/$amount") }.await() }
+
+    private suspend fun withdrawAsync(email: String, amount: BigDecimal) =
+            coroutineScope { async { client.post<HttpResponse>(port = 8080, path = "/withdraw/$email/$amount") }.await() }
 
     private suspend fun transferAsync(sender: String, receiver: String, amount: BigDecimal) =
             coroutineScope { async { client.post<HttpResponse>(port = 8080, path = "/transfer/$sender/$receiver/$amount") }.await() }

@@ -2,6 +2,7 @@ package de.marat.revolut.service
 
 import de.marat.revolut.db.AlreadyExistException
 import de.marat.revolut.db.BankDao
+import de.marat.revolut.db.ClientNotFoundException
 import de.marat.revolut.db.InsufficientFundsException
 import de.marat.revolut.model.Client
 import de.marat.revolut.model.Money
@@ -32,8 +33,28 @@ class TransactionHandler {
     suspend fun deposit(call: ApplicationCall) = runBlocking {
         val client = extractClientFromParam(call, "email")
         val amount = extractMoneyFromParam(call)
-        bank.deposit(client, amount)
-        call.respond(HttpStatusCode.OK)
+        try {
+            bank.deposit(client, amount)
+            call.respond(HttpStatusCode.OK)
+        } catch (ex: ClientNotFoundException) {
+            respondNoSuchUser(call, client)
+        }
+    }
+
+    suspend fun withdraw(call: ApplicationCall) = runBlocking {
+        val client = extractClientFromParam(call, "email")
+        val amount = extractMoneyFromParam(call)
+        try {
+            bank.withdraw(client, amount)
+        } catch (ex: ClientNotFoundException) {
+            respondNoSuchUser(call, client)
+        } catch (ex: InsufficientFundsException) {
+            respondNotEnoughMoney(call)
+        }
+    }
+
+    private suspend fun respondNoSuchUser(call: ApplicationCall, client: Client) {
+        call.respond(HttpStatusCode.BadRequest, ErrorMessage("User ${client.email} does not exist."))
     }
 
     suspend fun transfer(call: ApplicationCall) = runBlocking {
@@ -44,9 +65,13 @@ class TransactionHandler {
             bank.transfer(sender, receiver, amount)
             call.respond(HttpStatusCode.OK)
         } catch (ex: InsufficientFundsException) {
-            call.respond(HttpStatusCode.BadRequest, ErrorMessage("Insufficient funds"))
+            respondNotEnoughMoney(call)
         }
 
+    }
+
+    private suspend fun respondNotEnoughMoney(call: ApplicationCall) {
+        call.respond(HttpStatusCode.BadRequest, ErrorMessage("Insufficient funds"))
     }
 
     private fun extractClientFromParam(call: ApplicationCall, param: String) =
