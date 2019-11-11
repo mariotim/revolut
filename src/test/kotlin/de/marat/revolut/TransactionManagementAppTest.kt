@@ -101,6 +101,21 @@ class TransactionManagementAppTest : HttpResponseConverter() {
     }
 
 
+    @Test
+    fun transfer_InsufficientFunds() = runBlocking {
+        val sender = "user7"
+        val amountSenderHas = BigDecimal(100.0)
+        val receiver = "user8"
+        assertUserCreated(sender)
+        assertUserCreated(receiver)
+        assertDepositSuccessful(sender, amountSenderHas)
+        val transfer = transferAsync(sender, receiver, BigDecimal(1000.0))
+        val error: ErrorMessage = convertToError(transfer)
+        assertThat(transfer.status).isEqualTo(HttpStatusCode.BadRequest)
+        assertThat(error).isEqualTo(ErrorMessage("Insufficient funds"))
+        return@runBlocking
+    }
+
     private suspend fun assertUserCreated(email: String) {
         val createUserResponse = createUserAsync(email)
         assertThat(createUserResponse.status).isEqualTo(HttpStatusCode.Created)

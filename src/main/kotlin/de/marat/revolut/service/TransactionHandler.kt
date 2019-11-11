@@ -2,6 +2,7 @@ package de.marat.revolut.service
 
 import de.marat.revolut.db.AlreadyExistException
 import de.marat.revolut.db.BankDao
+import de.marat.revolut.db.InsufficientFundsException
 import de.marat.revolut.model.Client
 import de.marat.revolut.model.Money
 import io.ktor.application.ApplicationCall
@@ -39,8 +40,12 @@ class TransactionHandler {
         val sender = extractClientFromParam(call, "sender")
         val receiver = extractClientFromParam(call, "receiver")
         val amount = extractMoneyFromParam(call)
-        bank.transfer(sender, receiver, amount)
-        call.respond(HttpStatusCode.OK)
+        try {
+            bank.transfer(sender, receiver, amount)
+            call.respond(HttpStatusCode.OK)
+        } catch (ex: InsufficientFundsException) {
+            call.respond(HttpStatusCode.BadRequest, ErrorMessage("Insufficient funds"))
+        }
 
     }
 
