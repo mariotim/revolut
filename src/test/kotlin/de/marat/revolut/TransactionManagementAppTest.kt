@@ -80,12 +80,11 @@ class TransactionManagementAppTest : HttpResponseConverter() {
     fun deposit() = runBlocking {
         val email = "user4"
         val amount = BigDecimal(100.0)
-        val createUserResponse = createUserAsync(email)
-        val depositUserResponse = depositAsync(email, amount)
-        assertThat(createUserResponse.status).isEqualTo(HttpStatusCode.Created)
-        assertThat(depositUserResponse.status).isEqualTo(HttpStatusCode.OK)
+        assertUserCreated(email)
+        assertDepositSuccessful(email, amount)
         return@runBlocking
     }
+
 
     @Test
     fun transfer() = runBlocking {
@@ -95,7 +94,7 @@ class TransactionManagementAppTest : HttpResponseConverter() {
         val amountReceiverhas = BigDecimal(50.0)
         assertUserCreated(sender)
         assertUserCreated(receiver)
-        assertThat(depositAsync(sender, amountSenderHas))
+        assertDepositSuccessful(sender, amountSenderHas)
         val transfer = transferAsync(sender, receiver, BigDecimal(50.0))
         assertThat(transfer.status).isEqualTo(HttpStatusCode.OK)
         assertBalance(receiver, amountReceiverhas)
@@ -113,6 +112,12 @@ class TransactionManagementAppTest : HttpResponseConverter() {
         val balanceUserResponse = balanceAsync(email)
         val balance = convertToMoney(balanceUserResponse)
         assertThat(balance).isEqualTo(Money(amount))
+    }
+
+
+    private suspend fun assertDepositSuccessful(email: String, amount: BigDecimal) {
+        val depositUserResponse = depositAsync(email, amount)
+        assertThat(depositUserResponse.status).isEqualTo(HttpStatusCode.OK)
     }
 
     private suspend fun createUserAsync(email: String) =
