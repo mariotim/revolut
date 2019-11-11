@@ -1,26 +1,27 @@
 package de.marat.revolut
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.fasterxml.jackson.module.kotlin.readValue
 import de.marat.revolut.model.Client
+import de.marat.revolut.model.Money
 import de.marat.revolut.service.ErrorMessage
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.apache.Apache
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
+import io.ktor.client.request.get
 import io.ktor.client.request.put
 import io.ktor.client.response.HttpResponse
-import io.ktor.http.contentLength
-import kotlinx.coroutines.*
-import kotlinx.coroutines.io.readFully
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 
 @ExperimentalCoroutinesApi
-class TransactionManagementAppTest {
+class TransactionManagementAppTest : HttpResponseConverter() {
     private lateinit var client: HttpClient
     private lateinit var transactionManagementApp: TransactionManagementApp
 
@@ -46,7 +47,7 @@ class TransactionManagementAppTest {
     @Test
     fun createUser() = runBlocking {
         val email = "user1"
-        val httpResponse = createUser(email)
+        val httpResponse = createUserPutRequest(email)
         val deferredResponse = httpResponse.await()
         assertThat(deferredResponse.status.value).isEqualTo(201)
         val client: Client = convertToClient(deferredResponse)
@@ -56,14 +57,17 @@ class TransactionManagementAppTest {
 
 
     @Test
-    fun createUser_AlreadyExist_SomeoneTriedToUseSameMailSameTime() = runBlocking {
+    fun createUser_AlreadyExist() = runBlocking {
         val email = "user2"
-        val httpResponse = createUser(email)
-        delay(100)
-        val httpResponse2Time = createUser(email)
+        val httpResponse = createUserPutRequest(email)
         val deferredResponse = httpResponse.await()
+        val httpResponse2Time = createUserPutRequest(email)
         val deferredResponse2Time = httpResponse2Time.await()
+
         assertThat(deferredResponse.status.value).isEqualTo(201)
+        val client: Client = convertToClient(deferredResponse)
+        assertThat(client).isEqualTo(Client(email))
+
         assertThat(deferredResponse2Time.status.value).isEqualTo(409)
         val error: ErrorMessage = convertToError(deferredResponse2Time)
         assertThat(error).isEqualTo(ErrorMessage("User $email already exist."))
@@ -71,25 +75,23 @@ class TransactionManagementAppTest {
     }
 
     @Test
-    fun balance() {
-//        val email = "user3"
+    fun balance() = runBlocking {
+        val email = "user3"
+        val httpResponse = createUserPutRequest(email)
+        val deferredCreateUserResponse = httpResponse.await()
+        val balanceUserResponse = balance(email)
+        val deferredBalanceUserResponse = balanceUserResponse.await()
 
+        assertThat(deferredCreateUserResponse.status.value).isEqualTo(201)
+        val balance = convertToMoney(deferredBalanceUserResponse)
+        assertThat(balance).isEqualTo(Money(BigDecimal.ZERO))
+        return@runBlocking
     }
 
-    private suspend fun convertToClient(deferredResponse: HttpResponse): Client {
-        val mapper = ObjectMapper().registerModule(KotlinModule())
-        val byteArray = ByteArray(deferredResponse.contentLength()!!.toInt())
-        deferredResponse.content.readFully(byteArray)
-        return mapper.readValue(byteArray)
-    }
 
-    private suspend fun convertToError(deferredResponse: HttpResponse): ErrorMessage {
-        val mapper = ObjectMapper().registerModule(KotlinModule())
-        val byteArray = ByteArray(deferredResponse.contentLength()!!.toInt())
-        deferredResponse.content.readFully(byteArray)
-        return mapper.readValue(byteArray)
-    }
-
-    private fun CoroutineScope.createUser(email: String) =
+    private fun CoroutineScope.createUserPutRequest(email: String) =
             async { client.put<HttpResponse>(port = 8080, path = "/create/$email") }
+
+    private fun CoroutineScope.balance(email: String) =
+            async { client.get<HttpResponse>(port = 8080, path = "/balance/$email") }
 }

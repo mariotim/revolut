@@ -22,7 +22,9 @@ class TransactionHandler {
     }
 
     suspend fun balance(call: ApplicationCall) = runBlocking {
-        //TODO: implement
+        val client = extractClientFromParam(call)
+        val balance = bank.balance(client)
+        call.respond(HttpStatusCode.OK, balance)
     }
 
     private fun extractClientFromParam(call: ApplicationCall) =
