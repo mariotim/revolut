@@ -3,6 +3,7 @@ package de.marat.revolut.service
 import de.marat.revolut.db.AlreadyExistException
 import de.marat.revolut.db.BankDao
 import de.marat.revolut.model.Client
+import de.marat.revolut.model.Money
 import io.ktor.application.ApplicationCall
 import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
@@ -27,8 +28,20 @@ class TransactionHandler {
         call.respond(HttpStatusCode.OK, balance)
     }
 
+    suspend fun deposit(call: ApplicationCall) = runBlocking {
+        val client = extractClientFromParam(call)
+        val amount = extractMoneyFromParam(call)
+        bank.deposit(client, amount)
+        call.respond(HttpStatusCode.OK)
+    }
+
     private fun extractClientFromParam(call: ApplicationCall) =
             Client(call.parameters["email"].toString())
+
+    private fun extractMoneyFromParam(call: ApplicationCall) =
+            Money(call.parameters["amount"]!!.toBigDecimal())
+
+
 }
 
 data class ErrorMessage(val error: String)

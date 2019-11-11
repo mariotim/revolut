@@ -8,11 +8,12 @@ import io.ktor.client.engine.apache.Apache
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.get
+import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.response.HttpResponse
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -47,8 +48,7 @@ class TransactionManagementAppTest : HttpResponseConverter() {
     @Test
     fun createUser() = runBlocking {
         val email = "user1"
-        val httpResponse = createUserPutRequest(email)
-        val deferredResponse = httpResponse.await()
+        val deferredResponse = createUserPutRequestAsync(email)
         assertThat(deferredResponse.status.value).isEqualTo(201)
         val client: Client = convertToClient(deferredResponse)
         assertThat(client).isEqualTo(Client(email))
@@ -59,10 +59,8 @@ class TransactionManagementAppTest : HttpResponseConverter() {
     @Test
     fun createUser_AlreadyExist() = runBlocking {
         val email = "user2"
-        val httpResponse = createUserPutRequest(email)
-        val deferredResponse = httpResponse.await()
-        val httpResponse2Time = createUserPutRequest(email)
-        val deferredResponse2Time = httpResponse2Time.await()
+        val deferredResponse = createUserPutRequestAsync(email)
+        val deferredResponse2Time = createUserPutRequestAsync(email)
 
         assertThat(deferredResponse.status.value).isEqualTo(201)
         val client: Client = convertToClient(deferredResponse)
@@ -73,25 +71,37 @@ class TransactionManagementAppTest : HttpResponseConverter() {
         assertThat(error).isEqualTo(ErrorMessage("User $email already exist."))
         return@runBlocking
     }
-    
+
     @Test
     fun balance() = runBlocking {
         val email = "user3"
-        val httpResponse = createUserPutRequest(email)
-        val deferredCreateUserResponse = httpResponse.await()
-        val balanceUserResponse = balance(email)
-        val deferredBalanceUserResponse = balanceUserResponse.await()
+        val createUserResponse = createUserPutRequestAsync(email)
+        val balanceUserResponse = balanceAsync(email)
 
-        assertThat(deferredCreateUserResponse.status.value).isEqualTo(201)
-        val balance = convertToMoney(deferredBalanceUserResponse)
+        assertThat(createUserResponse.status.value).isEqualTo(201)
+        val balance = convertToMoney(balanceUserResponse)
         assertThat(balance).isEqualTo(Money(BigDecimal.ZERO))
         return@runBlocking
     }
 
+    @Test
+    fun deposit() = runBlocking {
+        val email = "user4"
+        val amount = BigDecimal(100.0)
+        val createUserResponse = createUserPutRequestAsync(email)
+        val depositUserResponse = depositRequestAsync(email, amount)
+        assertThat(createUserResponse.status.value).isEqualTo(201)
+        assertThat(depositUserResponse.status.value).isEqualTo(200)
+        return@runBlocking
+    }
 
-    private fun CoroutineScope.createUserPutRequest(email: String) =
-            async { client.put<HttpResponse>(port = 8080, path = "/create/$email") }
 
-    private fun CoroutineScope.balance(email: String) =
-            async { client.get<HttpResponse>(port = 8080, path = "/balance/$email") }
+    private suspend fun createUserPutRequestAsync(email: String) =
+            coroutineScope { async { client.put<HttpResponse>(port = 8080, path = "/create/$email") }.await() }
+
+    private suspend fun balanceAsync(email: String) =
+            coroutineScope { async { client.get<HttpResponse>(port = 8080, path = "/balance/$email") }.await() }
+
+    private suspend fun depositRequestAsync(email: String, amount: BigDecimal) =
+            coroutineScope { async { client.post<HttpResponse>(port = 8080, path = "/deposit/$email/$amount") }.await() }
 }

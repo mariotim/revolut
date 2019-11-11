@@ -11,6 +11,7 @@ import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
 import io.ktor.jackson.jackson
 import io.ktor.routing.get
+import io.ktor.routing.post
 import io.ktor.routing.put
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
@@ -52,6 +53,9 @@ class TransactionManagementApp {
             }
             get("/balance/{email}") {
                 transactionHandler.balance(call)
+            }
+            post("/deposit/{email}/{amount}") {
+                transactionHandler.deposit(call)
             }
         }
     }
