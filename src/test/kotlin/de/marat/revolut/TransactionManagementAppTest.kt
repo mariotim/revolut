@@ -73,7 +73,7 @@ class TransactionManagementAppTest : HttpResponseConverter() {
         assertThat(error).isEqualTo(ErrorMessage("User $email already exist."))
         return@runBlocking
     }
-
+    
     @Test
     fun balance() = runBlocking {
         val email = "user3"

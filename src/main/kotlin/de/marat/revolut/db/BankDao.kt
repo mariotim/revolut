@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentMap
 class BankDao private constructor() : Bank {
     private val bankAccounts: ConcurrentMap<Client, Money> = ConcurrentHashMap()
 
-    //    @Synchronized
     override fun createClient(email: String) {
         val client = Client(email)
         if (bankAccounts[client] != null)
