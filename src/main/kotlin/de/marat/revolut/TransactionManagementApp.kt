@@ -18,7 +18,7 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
 import java.util.concurrent.TimeUnit
 
-class TransactionManagementApp() {
+class TransactionManagementApp {
     private val server: NettyApplicationEngine
 
     init {

@@ -92,27 +92,4 @@ class TransactionManagementAppTest {
 
     private fun CoroutineScope.createUser(email: String) =
             async { client.put<HttpResponse>(port = 8080, path = "/create/$email") }
-/*
-
-    @Test
-    fun createUser_threads() = runBlocking {
-        val firstRequest = async { client.put<HttpResponse>(port = 8080, path = "/email=marat1") }
-        val secondRequest = async { client.put<HttpResponse>(port = 8080, path = "/email=marat1") }
-        val third = async { client.put<HttpResponse>(port = 8080, path = "/email=marat2") }
-        val fourth = async { client.put<HttpResponse>(port = 8080, path = "/email=marat3") }
-
-        // Get the request contents without blocking threads, but suspending the function until both
-        // requests are done.
-        val bytes1 = firstRequest.await() // Suspension point.
-        val bytes2 = secondRequest.await() // Suspension point.
-        val bytes3 = third.await() // Suspension point.
-        val bytes4 = fourth.await() // Suspension point.
-        println(bytes1.status.value)
-        println(bytes2.status.value)
-        println(bytes3.status.value)
-        println(bytes4.status.value)
-        client.close()
-    }
-*/
-
 }
