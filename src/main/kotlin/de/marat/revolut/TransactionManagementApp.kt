@@ -57,6 +57,9 @@ class TransactionManagementApp {
             post("/deposit/{email}/{amount}") {
                 transactionHandler.deposit(call)
             }
+            post("transfer/{sender}/{receiver}/{amount}") {
+                transactionHandler.transfer(call)
+            }
         }
     }
 
