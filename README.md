@@ -52,6 +52,7 @@ The REST API to the example app is described below.
   
 #### Example
 ` curl -i -H 'Accept: application/json' http://localhost:8080/balance/marat@timergaliev.com`  
+` curl -i -H 'Accept: application/json' http://localhost:8080/balance/marat@timergaliev.com1`  
 
     HTTP/1.1 200 OK
     Content-Length: 19
@@ -68,4 +69,124 @@ The REST API to the example app is described below.
     
     {
       "error" : "Client no_marat@timergaliev1.com does not exist."
+    }
+## Deposit
+
+### Request
+
+`POST /deposit/{email}/{balance}`
+
+### Response
+
+  * HttpStatus: 200 OK
+  * HttpStatus: 404 Not Found: Client with email doesn't exist
+  * HttpStatus: 400 Bad Request: Amount cannot be negative
+  
+#### Example
+` curl -i -H 'Accept: application/json' -X POST http://localhost:8080/deposit/marat@timergaliev.com/100.0`  
+
+    HTTP/1.1 200 OK
+    Content-Length: 19
+    Content-Type: application/json; charset=UTF-8
+    
+    {
+      "balance" : 0
+    }
+    
+    
+    HTTP/1.1 404 Not Found
+    Content-Length: 66
+    Content-Type: application/json; charset=UTF-8
+    
+    {
+      "error" : "Client no_marat@timergaliev1.com does not exist."
+    }
+    
+    
+    HTTP/1.1 400 Bad Request
+    Content-Length: 63
+    Content-Type: application/json; charset=UTF-8
+    
+    {
+      "error" : "Illegal argument: balance cannot be negative."
+    }
+
+## Withdraw
+
+### Request
+
+`POST /withdraw/{email}/{balance}`
+
+### Response
+
+  * HttpStatus: 200 OK
+  * HttpStatus: 404 Not Found: Client with email doesn't exist
+  * HttpStatus: 400 Bad Request: Amount cannot be negative
+  * HttpStatus: 403 Forbidden: Insufficient funds
+  
+#### Example
+` curl -i -H 'Accept: application/json' -X POST http://localhost:8080/withdraw/marat@timergaliev.com/10.0`  
+
+    HTTP/1.1 200 OK
+    Content-Length: 0
+    
+    
+    HTTP/1.1 404 Not Found
+    Content-Length: 66
+    Content-Type: application/json; charset=UTF-8
+    
+    {
+      "error" : "Client no_marat@timergaliev1.com does not exist."
+    }
+    
+    HTTP/1.1 403 Forbidden
+    Content-Length: 36
+    Content-Type: application/json; charset=UTF-8
+    
+    {
+      "error" : "Insufficient funds"
+    }
+    
+    
+
+## Transfer
+
+### Request
+
+`POST transfer/{sender}/{receiver}/{balance}`
+
+### Response
+
+  * HttpStatus: 200 OK
+  * HttpStatus: 404 Not Found: Client with email doesn't exist
+  * HttpStatus: 400 Bad Request: Amount cannot be negative
+  * HttpStatus: 403 Forbidden: Insufficient funds
+  
+#### Example
+` curl -i -H 'Accept: application/json' -X POST http://localhost:8080/transfer/marat@timergaliev.com/100.0`  
+
+    HTTP/1.1 200 OK
+    Content-Length: 19
+    Content-Type: application/json; charset=UTF-8
+    
+    {
+      "balance" : 0
+    }
+    
+    
+    HTTP/1.1 404 Not Found
+    Content-Length: 66
+    Content-Type: application/json; charset=UTF-8
+    
+    {
+      "error" : "Client no_marat@timergaliev1.com does not exist."
+    }
+    
+    
+    HTTP/1.1 400 Bad Request
+    Content-Length: 63
+    Content-Type: application/json; charset=UTF-8
+    
+    {
+      "error" : "Illegal argument: balance cannot be negative."
     }
