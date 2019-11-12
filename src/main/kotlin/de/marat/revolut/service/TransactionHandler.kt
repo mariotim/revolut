@@ -91,6 +91,8 @@ class TransactionHandler {
                     call.respond(HttpStatusCode.OK)
                 } catch (ex: InsufficientFundsException) {
                     respondNotEnoughMoney(call, ex)
+                } catch (ex: ClientNotFoundException) {
+                    respondNoSuchUser(call, ex)
                 } catch (unhandledException: Exception) {
                     respondUnhandledException(call, unhandledException)
                 }

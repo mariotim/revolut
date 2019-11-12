@@ -138,6 +138,22 @@ class BankAccountManagerAppTest : HttpResponseConverter() {
 
 
     @Test
+    fun transfer_ReceiverNotFound() = runBlocking {
+        val sender = "client11111"
+        val amountSenderHas = BigDecimal(100.0)
+        val receiver = "not_existing_receiver"
+        assertClientCreated(sender)
+        assertDepositSuccessful(sender, amountSenderHas)
+        val transfer = transferAsync(sender, receiver, BigDecimal(10.0))
+        val error: ErrorMessage = convertToError(transfer)
+        assertThat(transfer.status).isEqualTo(HttpStatusCode.NotFound)
+        assertThat(error).isEqualTo(ErrorMessage("Client $receiver does not exist."))
+        return@runBlocking
+    }
+
+
+
+    @Test
     fun withdraw() = runBlocking {
         val email = "client9"
         assertClientCreated(email)
