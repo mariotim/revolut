@@ -9,34 +9,31 @@ import java.util.concurrent.ConcurrentMap
 class BankDao private constructor() : Bank {
     private val bankAccounts: ConcurrentMap<Client, Money> = ConcurrentHashMap()
 
-    override fun createClient(email: String) {
+    override suspend fun createClient(email: String) {
+
         val client = Client(email)
         if (bankAccounts[client] != null)
-            throw AlreadyExistException()
+            throw AlreadyExistException("User ${client.email} already exist.")
         bankAccounts[client] = Money()
     }
 
-    @Synchronized
-    override fun balance(client: Client): Money {
-        return bankAccounts.getOrElse(client, { throw ClientNotFoundException() })
+    override suspend fun balance(client: Client): Money {
+        return bankAccounts.getOrElse(client, { throw ClientNotFoundException("User ${client.email} does not exist.") })
     }
 
-    @Synchronized
-    override fun deposit(client: Client, money: Money) {
+    override suspend fun deposit(client: Client, money: Money) {
         if (bankAccounts.computeIfPresent(client) { _, u -> u.add(money) } == null) {
-            throw ClientNotFoundException()
+            throw ClientNotFoundException("User ${client.email} does not exist.")
         }
     }
 
-    @Synchronized
-    override fun withdraw(client: Client, money: Money) {
+    override suspend fun withdraw(client: Client, money: Money) {
         if (bankAccounts.computeIfPresent(client) { _, balance -> computeWithdrawal(balance, money) } == null) {
-            throw ClientNotFoundException()
+            throw ClientNotFoundException("User ${client.email} does not exist.")
         }
     }
 
-    @Synchronized
-    override fun transfer(sender: Client, receiver: Client, amountToSend: Money) {
+    override suspend fun transfer(sender: Client, receiver: Client, amountToSend: Money) {
         balance(receiver)
         withdraw(sender, amountToSend)
         deposit(receiver, amountToSend)
@@ -56,16 +53,16 @@ class BankDao private constructor() : Bank {
 
         private fun isEnoughMoney(balance: Money, requestedMoney: Money) {
             if (balance.amount <= requestedMoney.amount) {
-                throw InsufficientFundsException()
+                throw InsufficientFundsException("Insufficient funds")
             }
         }
 
         private fun computeWithdrawal(balance: Money, money: Money): Money {
-            isEnoughMoney(balance, money);return balance.substract(money)
+            isEnoughMoney(balance, money);return balance.subtract(money)
         }
     }
 }
 
-class AlreadyExistException : IllegalStateException()
-class ClientNotFoundException : IllegalStateException()
-class InsufficientFundsException : IllegalStateException()
+class AlreadyExistException(message: String) : IllegalStateException(message)
+class ClientNotFoundException(message: String) : IllegalStateException(message)
+class InsufficientFundsException(message: String) : IllegalStateException(message)

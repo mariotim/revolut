@@ -2,6 +2,8 @@ package de.marat.revolut.db
 
 import de.marat.revolut.model.Client
 import de.marat.revolut.model.Money
+import de.marat.revolut.model.NegativeAmountException
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -22,42 +24,66 @@ class BankDaoTest {
     }
 
     @Test
-    fun createClient() {
+    fun createClient() = runBlocking {
         bank.createClient("client")
     }
 
     @Test
-    fun createClient_AlreadyExist() {
+    fun createClient_AlreadyExist() = runBlocking {
         val email = "client1"
         bank.createClient(email)
-        assertThrows<AlreadyExistException> { bank.createClient(email) }
+        assertThrows<AlreadyExistException> { runBlocking { bank.createClient(email) } }
+        return@runBlocking
     }
 
     @Test
-    fun deposit() {
+    fun deposit() = runBlocking {
         val email = "email1"
         prepareBankAccountWithHundredBux(email)
         bank.deposit(Client(email), Money(BigDecimal.valueOf(50.0)))
         assertThat(bank.balance(Client(email))).isEqualTo(Money(BigDecimal.valueOf(150.0)))
+        return@runBlocking
     }
 
     @Test
-    fun deposit_notFoundClient() {
-        assertThrows<ClientNotFoundException> { bank.deposit(Client("not_found"), Money()) }
+    fun deposit_negative() = runBlocking {
+        val email = "email1111"
+        prepareBankAccountWithHundredBux(email)
+        assertThrows<NegativeAmountException> {
+            runBlocking {
+                bank.deposit(Client(email), Money(BigDecimal.valueOf(-50.0)))
+            }
+        }
+        return@runBlocking
     }
 
     @Test
-    fun withdraw() {
+    fun deposit_notFoundClient() = runBlocking {
+        assertThrows<ClientNotFoundException> {
+            runBlocking {
+                bank.deposit(Client("not_found"), Money())
+            }
+        }
+        return@runBlocking
+    }
+
+    @Test
+    fun withdraw() = runBlocking {
         val client = "test"
         prepareBankAccountWithHundredBux(client)
         bank.withdraw(Client(client), Money(BigDecimal.valueOf(50.0)))
         assertThat(bank.balance(Client(client))).isEqualTo(Money(BigDecimal.valueOf(50.0)))
+        return@runBlocking
     }
 
     @Test
     fun withdraw_notFoundClient() {
         prepareBankAccountWithHundredBux("email_1")
-        assertThrows<ClientNotFoundException> { bank.withdraw(Client("email_2"), Money()) }
+        assertThrows<ClientNotFoundException> {
+            runBlocking {
+                bank.withdraw(Client("email_2"), Money())
+            }
+        }
     }
 
     @Test
@@ -65,11 +91,16 @@ class BankDaoTest {
         val email = "schnulibuh"
         prepareBankAccountWithHundredBux(email)
         val tooMuchMoneyToTake = BigDecimal.valueOf(150)
-        assertThrows<InsufficientFundsException> { bank.withdraw(Client(email), Money(tooMuchMoneyToTake)) }
+        assertThrows<InsufficientFundsException> {
+            runBlocking {
+                bank.withdraw(Client(email), Money(tooMuchMoneyToTake))
+            }
+        }
+
     }
 
     @Test
-    fun transfer() {
+    fun transfer() = runBlocking {
         val emailMami = "mami"
         prepareBankAccountWithHundredBux(emailMami)
         val emailPapi = "papi"
@@ -82,9 +113,10 @@ class BankDaoTest {
         val expectedMoneyOfReceiver = BigDecimal.valueOf(110.0)
         assertThat(bank.balance(sender)).isEqualTo(Money(expectedMoneyOfSender))
         assertThat(bank.balance(receiver)).isEqualTo(Money(expectedMoneyOfReceiver))
+        return@runBlocking
     }
 
-    private fun prepareBankAccountWithHundredBux(email: String) {
+    private fun prepareBankAccountWithHundredBux(email: String) = runBlocking {
         bank.createClient(email)
         bank.deposit(Client(email), Money())
         bank.deposit(Client(email), Money(BigDecimal.valueOf(100.0)))

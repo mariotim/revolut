@@ -59,7 +59,7 @@ class TransactionManagementAppTest : HttpResponseConverter() {
         assertUserCreated(email)
 
         val deferredResponse2Time = createUserAsync(email)
-        assertThat(deferredResponse2Time.status).isEqualTo(HttpStatusCode.Conflict)
+        assertThat(deferredResponse2Time.status).isEqualTo(HttpStatusCode.BadRequest)
         val error: ErrorMessage = convertToError(deferredResponse2Time)
         assertThat(error).isEqualTo(ErrorMessage("User $email already exist."))
         return@runBlocking
@@ -75,13 +75,24 @@ class TransactionManagementAppTest : HttpResponseConverter() {
         }
     }
 
-
     @Test
     fun deposit() = runBlocking {
         val email = "user4"
         val amount = BigDecimal(100.0)
         assertUserCreated(email)
         assertDepositSuccessful(email, amount)
+        return@runBlocking
+    }
+
+
+    @Test
+    fun deposit_negative() = runBlocking {
+        val email = "user4444"
+        assertUserCreated(email)
+        val deposit = depositAsync(email, BigDecimal(-1000.0))
+        val error: ErrorMessage = convertToError(deposit)
+        assertThat(deposit.status).isEqualTo(HttpStatusCode.BadRequest)
+        assertThat(error).isEqualTo(ErrorMessage("Illegal argument: amount cannot be negative."))
         return@runBlocking
     }
 
@@ -136,7 +147,6 @@ class TransactionManagementAppTest : HttpResponseConverter() {
         assertThat(error).isEqualTo(ErrorMessage("Insufficient funds"))
         return@runBlocking
     }
-
 
     private suspend fun assertUserCreated(email: String) {
         val createUserResponse = createUserAsync(email)
