@@ -18,7 +18,7 @@ class BankDao private constructor() : Bank {
     }
 
     override suspend fun balance(client: Client): Money {
-        return bankAccounts.getOrElse(client, { throw ClientNotFoundException("User ${client.email} does not exist.") })
+        return bankAccounts.getOrElse(client, { throw ClientNotFoundException("Client ${client.email} does not exist.") })
     }
 
     override suspend fun deposit(client: Client, money: Money) {
@@ -52,7 +52,7 @@ class BankDao private constructor() : Bank {
         }
 
         private fun isEnoughMoney(balance: Money, requestedMoney: Money) {
-            if (balance.amount <= requestedMoney.amount) {
+            if (balance.balance <= requestedMoney.balance) {
                 throw InsufficientFundsException("Insufficient funds")
             }
         }

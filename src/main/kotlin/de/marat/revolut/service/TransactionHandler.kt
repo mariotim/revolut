@@ -21,16 +21,22 @@ class TransactionHandler {
         try {
             val client = extractClientFromParam(call, "email")
             bank.createClient(client.email)
-            call.respond(HttpStatusCode.Created, client)
+            call.respond(HttpStatusCode.Created)
         } catch (ex: AlreadyExistException) {
             call.respond(HttpStatusCode.Conflict, ErrorMessage(ex.message))
         }
     }
 
     suspend fun balance(call: ApplicationCall) = runBlocking {
-        val client = extractClientFromParam(call, "email")
-        val balance = bank.balance(client)
-        call.respond(HttpStatusCode.OK, balance)
+        try {
+            val client = extractClientFromParam(call, "email")
+            val balance = bank.balance(client)
+            call.respond(HttpStatusCode.OK, balance)
+        } catch (ex: ClientNotFoundException) {
+            respondNoSuchUser(call, ex)
+        } catch (ex: Exception) {
+            respondUnhandledException(call, ex)
+        }
     }
 
     suspend fun deposit(call: ApplicationCall) {
@@ -114,7 +120,7 @@ class TransactionHandler {
             Client(call.parameters[param].toString())
 
     private fun extractMoneyFromParam(call: ApplicationCall) =
-            Money(call.parameters["amount"]!!.toBigDecimal())
+            Money(call.parameters["balance"]!!.toBigDecimal())
 
 
 }

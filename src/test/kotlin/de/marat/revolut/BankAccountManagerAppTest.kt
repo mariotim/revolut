@@ -1,6 +1,5 @@
 package de.marat.revolut
 
-import de.marat.revolut.model.Client
 import de.marat.revolut.model.Money
 import de.marat.revolut.service.ErrorMessage
 import io.ktor.client.HttpClient
@@ -25,7 +24,7 @@ import java.math.BigDecimal
 
 @ExperimentalCoroutinesApi
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TransactionManagementAppTest : HttpResponseConverter() {
+class BankAccountManagerAppTest : HttpResponseConverter() {
     private lateinit var client: HttpClient
     private lateinit var transactionManagementApp: TransactionManagementApp
 
@@ -78,6 +77,15 @@ class TransactionManagementAppTest : HttpResponseConverter() {
     }
 
     @Test
+    fun balance_ClientNotFound() = runBlocking {
+        val balance = balanceAsync("non_existing")
+        assertThat(balance.status).isEqualTo(HttpStatusCode.NotFound)
+        val error: ErrorMessage = convertToError(balance)
+        assertThat(error).isEqualTo(ErrorMessage("Client non_existing does not exist."))
+        return@runBlocking
+    }
+
+    @Test
     fun deposit() = runBlocking {
         val email = "client4"
         val amount = BigDecimal(100.0)
@@ -94,7 +102,7 @@ class TransactionManagementAppTest : HttpResponseConverter() {
         val deposit = depositAsync(email, BigDecimal(-1000.0))
         val error: ErrorMessage = convertToError(deposit)
         assertThat(deposit.status).isEqualTo(HttpStatusCode.BadRequest)
-        assertThat(error).isEqualTo(ErrorMessage("Illegal argument: amount cannot be negative."))
+        assertThat(error).isEqualTo(ErrorMessage("Illegal argument: balance cannot be negative."))
         return@runBlocking
     }
 
@@ -153,8 +161,6 @@ class TransactionManagementAppTest : HttpResponseConverter() {
     private suspend fun assertClientCreated(email: String) {
         val createClientResponse = createClientAsync(email)
         assertThat(createClientResponse.status).isEqualTo(HttpStatusCode.Created)
-        val client: Client = convertToClient(createClientResponse)
-        assertThat(client).isEqualTo(Client(email))
     }
 
     private suspend fun assertBalance(email: String, amount: BigDecimal) {

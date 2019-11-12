@@ -54,13 +54,13 @@ class TransactionManagementApp {
             get("/balance/{email}") {
                 transactionHandler.balance(call)
             }
-            post("/deposit/{email}/{amount}") {
+            post("/deposit/{email}/{balance}") {
                 transactionHandler.deposit(call)
             }
-            post("/withdraw/{email}/{amount}") {
+            post("/withdraw/{email}/{balance}") {
                 transactionHandler.withdraw(call)
             }
-            post("transfer/{sender}/{receiver}/{amount}") {
+            post("transfer/{sender}/{receiver}/{balance}") {
                 transactionHandler.transfer(call)
             }
         }
