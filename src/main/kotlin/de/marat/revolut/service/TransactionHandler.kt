@@ -98,7 +98,7 @@ class TransactionHandler {
     }
 
     private suspend fun respondNotEnoughMoney(call: ApplicationCall, ex: Exception) {
-        call.respond(HttpStatusCode.BadRequest, ErrorMessage(ex.message))
+        call.respond(HttpStatusCode.Forbidden, ErrorMessage(ex.message))
     }
 
     private suspend fun respondNegativeNumber(call: ApplicationCall, ex: Exception) {

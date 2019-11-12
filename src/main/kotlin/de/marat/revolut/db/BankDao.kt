@@ -13,7 +13,7 @@ class BankDao private constructor() : Bank {
 
         val client = Client(email)
         if (bankAccounts[client] != null)
-            throw AlreadyExistException("User ${client.email} already exist.")
+            throw AlreadyExistException("Client ${client.email} already exist.")
         bankAccounts[client] = Money()
     }
 
@@ -23,13 +23,13 @@ class BankDao private constructor() : Bank {
 
     override suspend fun deposit(client: Client, money: Money) {
         if (bankAccounts.computeIfPresent(client) { _, u -> u.add(money) } == null) {
-            throw ClientNotFoundException("User ${client.email} does not exist.")
+            throw ClientNotFoundException("Client ${client.email} does not exist.")
         }
     }
 
     override suspend fun withdraw(client: Client, money: Money) {
         if (bankAccounts.computeIfPresent(client) { _, balance -> computeWithdrawal(balance, money) } == null) {
-            throw ClientNotFoundException("User ${client.email} does not exist.")
+            throw ClientNotFoundException("Client ${client.email} does not exist.")
         }
     }
 
