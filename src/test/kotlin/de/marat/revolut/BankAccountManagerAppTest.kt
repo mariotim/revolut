@@ -165,6 +165,7 @@ class BankAccountManagerAppTest : HttpResponseConverter() {
 
     private suspend fun assertBalance(email: String, amount: BigDecimal) {
         val balanceResponse = balanceAsync(email)
+        assertThat(balanceResponse.status).isEqualTo(HttpStatusCode.OK)
         val balance = convertToMoney(balanceResponse)
         assertThat(balance).isEqualTo(Money(amount))
     }
