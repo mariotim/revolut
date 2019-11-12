@@ -126,6 +126,17 @@ class TransactionManagementAppTest : HttpResponseConverter() {
         return@runBlocking
     }
 
+    @Test
+    fun withdraw_InsufficientFunds() = runBlocking {
+        val email = "user10"
+        assertUserCreated(email)
+        val withdraw = withdrawAsync(email, BigDecimal(100))
+        val error: ErrorMessage = convertToError(withdraw)
+        assertThat(withdraw.status).isEqualTo(HttpStatusCode.BadRequest)
+        assertThat(error).isEqualTo(ErrorMessage("Insufficient funds"))
+        return@runBlocking
+    }
+
 
     private suspend fun assertUserCreated(email: String) {
         val createUserResponse = createUserAsync(email)

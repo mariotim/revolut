@@ -46,6 +46,7 @@ class TransactionHandler {
         val amount = extractMoneyFromParam(call)
         try {
             bank.withdraw(client, amount)
+            call.respond(HttpStatusCode.OK)
         } catch (ex: ClientNotFoundException) {
             respondNoSuchUser(call, client)
         } catch (ex: InsufficientFundsException) {
