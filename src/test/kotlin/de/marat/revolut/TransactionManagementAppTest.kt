@@ -17,17 +17,19 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import java.math.BigDecimal
 
 @ExperimentalCoroutinesApi
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TransactionManagementAppTest : HttpResponseConverter() {
     private lateinit var client: HttpClient
     private lateinit var transactionManagementApp: TransactionManagementApp
 
-    @BeforeEach
+    @BeforeAll
     fun init() = runBlocking {
         transactionManagementApp = TransactionManagementApp()
         transactionManagementApp.startServer()
@@ -40,7 +42,7 @@ class TransactionManagementAppTest : HttpResponseConverter() {
         }
     }
 
-    @AfterEach
+    @AfterAll
     fun shutdown() = runBlocking {
         client.close()
         transactionManagementApp.stopServer()
@@ -59,7 +61,7 @@ class TransactionManagementAppTest : HttpResponseConverter() {
         assertUserCreated(email)
 
         val deferredResponse2Time = createUserAsync(email)
-        assertThat(deferredResponse2Time.status).isEqualTo(HttpStatusCode.BadRequest)
+        assertThat(deferredResponse2Time.status).isEqualTo(HttpStatusCode.Conflict)
         val error: ErrorMessage = convertToError(deferredResponse2Time)
         assertThat(error).isEqualTo(ErrorMessage("User $email already exist."))
         return@runBlocking
