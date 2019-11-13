@@ -17,7 +17,7 @@ import kotlinx.coroutines.runBlocking
 class TransactionHandler {
     private val bank = BankDao.getInstance()
 
-    suspend fun createUser(call: ApplicationCall) = runBlocking {
+    suspend fun createClient(call: ApplicationCall) = runBlocking {
         try {
             val client = extractClientFromParam(call, "email")
             bank.createClient(client.email)
@@ -33,7 +33,7 @@ class TransactionHandler {
             val balance = bank.balance(client)
             call.respond(HttpStatusCode.OK, balance)
         } catch (ex: ClientNotFoundException) {
-            respondNoSuchUser(call, ex)
+            respondNoSuchClient(call, ex)
         } catch (ex: Exception) {
             respondUnhandledException(call, ex)
         }
@@ -48,7 +48,7 @@ class TransactionHandler {
                     bank.deposit(client, amount)
                     call.respond(HttpStatusCode.OK)
                 } catch (ex: ClientNotFoundException) {
-                    respondNoSuchUser(call, ex)
+                    respondNoSuchClient(call, ex)
                 } catch (ex: NegativeAmountException) {
                     respondNegativeNumber(call, ex)
                 } catch (ex: Exception) {
@@ -69,7 +69,7 @@ class TransactionHandler {
                     bank.withdraw(client, amount)
                     call.respond(HttpStatusCode.OK)
                 } catch (ex: ClientNotFoundException) {
-                    respondNoSuchUser(call, ex)
+                    respondNoSuchClient(call, ex)
                 } catch (ex: InsufficientFundsException) {
                     respondNotEnoughMoney(call, ex)
                 } catch (ex: Exception) {
@@ -92,7 +92,7 @@ class TransactionHandler {
                 } catch (ex: InsufficientFundsException) {
                     respondNotEnoughMoney(call, ex)
                 } catch (ex: ClientNotFoundException) {
-                    respondNoSuchUser(call, ex)
+                    respondNoSuchClient(call, ex)
                 } catch (unhandledException: Exception) {
                     respondUnhandledException(call, unhandledException)
                 }
@@ -101,7 +101,7 @@ class TransactionHandler {
 
     }
 
-    private suspend fun respondNoSuchUser(call: ApplicationCall, ex: Exception) {
+    private suspend fun respondNoSuchClient(call: ApplicationCall, ex: Exception) {
         call.respond(HttpStatusCode.NotFound, ErrorMessage(ex.message))
     }
 

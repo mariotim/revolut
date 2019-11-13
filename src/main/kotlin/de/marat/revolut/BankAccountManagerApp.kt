@@ -49,7 +49,7 @@ class TransactionManagementApp {
     private fun Application.routing(transactionHandler: TransactionHandler) {
         routing {
             put("/create/{email}") {
-                transactionHandler.createUser(call)
+                transactionHandler.createClient(call)
             }
             get("/balance/{email}") {
                 transactionHandler.balance(call)
