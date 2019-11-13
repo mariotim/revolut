@@ -19,7 +19,7 @@ class TransactionHandler {
 
     suspend fun createClient(call: ApplicationCall) = runBlocking {
         try {
-            val client = extractClientFromParam(call, "email")
+            val client = extractClientFromParam(call, PARAM_EMAIL)
             bank.createClient(client.email)
             call.respond(HttpStatusCode.Created)
         } catch (ex: AlreadyExistException) {
@@ -29,7 +29,7 @@ class TransactionHandler {
 
     suspend fun balance(call: ApplicationCall) = runBlocking {
         try {
-            val client = extractClientFromParam(call, "email")
+            val client = extractClientFromParam(call, PARAM_EMAIL)
             val balance = bank.balance(client)
             call.respond(HttpStatusCode.OK, balance)
         } catch (ex: ClientNotFoundException) {
@@ -43,7 +43,7 @@ class TransactionHandler {
         coroutineScope {
             launch {
                 try {
-                    val client = extractClientFromParam(call, "email")
+                    val client = extractClientFromParam(call, PARAM_EMAIL)
                     val amount = extractMoneyFromParam(call)
                     bank.deposit(client, amount)
                     call.respond(HttpStatusCode.OK)
@@ -64,7 +64,7 @@ class TransactionHandler {
         coroutineScope {
             launch {
                 try {
-                    val client = extractClientFromParam(call, "email")
+                    val client = extractClientFromParam(call, PARAM_EMAIL)
                     val amount = extractMoneyFromParam(call)
                     bank.withdraw(client, amount)
                     call.respond(HttpStatusCode.OK)
@@ -84,8 +84,8 @@ class TransactionHandler {
         coroutineScope {
             launch {
                 try {
-                    val sender = extractClientFromParam(call, "sender")
-                    val receiver = extractClientFromParam(call, "receiver")
+                    val sender = extractClientFromParam(call, PARAM_SENDER)
+                    val receiver = extractClientFromParam(call, PARAM_RECEIVER)
                     val amount = extractMoneyFromParam(call)
                     bank.transfer(sender, receiver, amount)
                     call.respond(HttpStatusCode.OK)
@@ -122,8 +122,15 @@ class TransactionHandler {
             Client(call.parameters[param].toString())
 
     private fun extractMoneyFromParam(call: ApplicationCall) =
-            Money(call.parameters["balance"]!!.toBigDecimal())
+            Money(call.parameters[PARAM_BALANCE]!!.toBigDecimal())
 
+
+    companion object {
+        private const val PARAM_EMAIL = "email"
+        private const val PARAM_BALANCE = "balance"
+        private const val PARAM_SENDER = "sender"
+        private const val PARAM_RECEIVER = "receiver"
+    }
 
 }
 
