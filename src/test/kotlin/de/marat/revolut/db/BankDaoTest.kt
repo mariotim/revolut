@@ -15,7 +15,7 @@ class BankDaoTest {
 
     @BeforeEach
     fun init() {
-        bank = BankDao.getInstance()
+        bank = BankDao
     }
 
     @Test

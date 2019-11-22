@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class TransactionHandler {
-    private val bank = BankDao.getInstance()
+    private val bank = BankDao
 
     suspend fun createClient(call: ApplicationCall) = runBlocking {
         try {

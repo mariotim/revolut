@@ -6,13 +6,13 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 
-class BankDao private constructor() : Bank {
+object BankDao : Bank {
     private val bankAccounts: ConcurrentMap<Client, Money> = ConcurrentHashMap()
 
     override suspend fun createClient(email: String) {
 
         val client = Client(email)
-        if (bankAccounts[client] != null)
+        if (bankAccounts.containsKey(client))
             throw AlreadyExistException("Client ${client.email} already exist.")
         bankAccounts[client] = Money()
     }
@@ -40,27 +40,16 @@ class BankDao private constructor() : Bank {
     }
 
 
-    companion object {
-        private var INSTANCE: BankDao? = null
-        fun getInstance(): BankDao {
-            synchronized(this) {
-                if (INSTANCE == null) {
-                    INSTANCE = BankDao()
-                }
-                return INSTANCE!!
-            }
-        }
-
-        private fun isEnoughMoney(balance: Money, requestedMoney: Money) {
-            if (balance.balance <= requestedMoney.balance) {
-                throw InsufficientFundsException("Insufficient funds")
-            }
-        }
-
-        private fun computeWithdrawal(balance: Money, money: Money): Money {
-            isEnoughMoney(balance, money);return balance.subtract(money)
+    private fun isEnoughMoney(balance: Money, requestedMoney: Money) {
+        if (balance.balance <= requestedMoney.balance) {
+            throw InsufficientFundsException("Insufficient funds")
         }
     }
+
+    private fun computeWithdrawal(balance: Money, money: Money): Money {
+        isEnoughMoney(balance, money);return balance.subtract(money)
+    }
+
 }
 
 class AlreadyExistException(message: String) : IllegalStateException(message)
